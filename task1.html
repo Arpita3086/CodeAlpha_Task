@@ -1,0 +1,171 @@
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Image Gallery</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+body{background:#f4f4f4;transition:.3s}
+body.dark{background:#121212;color:#fff}
+header{position:sticky;top:0;background:#222;color:#fff;padding:15px;z-index:1000}
+nav{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+input,button{padding:10px}
+.controls{display:flex;gap:10px;flex-wrap:wrap}
+.stats{display:flex;justify-content:center;gap:20px;padding:20px;font-weight:bold}
+.gallery{column-count:3;column-gap:15px;padding:20px}
+@media(max-width:900px){.gallery{column-count:2}}
+@media(max-width:600px){.gallery{column-count:1}}
+.card{break-inside:avoid;background:white;margin-bottom:15px;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.dark .card{background:#1e1e1e}
+.card img{width:100%;display:block;cursor:pointer;transition:.3s}
+.card img:hover{transform:scale(1.05)}
+.info{padding:10px;display:flex;justify-content:space-between}
+.favorite{cursor:pointer}
+.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);justify-content:center;align-items:center;flex-direction:column}
+.lightbox img{max-width:90%;max-height:80vh}
+.lightbox button{margin:5px}
+#topBtn{position:fixed;bottom:20px;right:20px;padding:12px;display:none}
+</style>
+</head>
+<body>
+<header>
+<nav>
+<h2>Advanced Image Gallery</h2>
+<div class="controls">
+<input id="search" placeholder="Search images...">
+<button onclick="filterCat('all')">All</button>
+<button onclick="filterCat('nature')">Nature</button>
+<button onclick="filterCat('travel')">Travel</button>
+<button onclick="filterCat('food')">Food</button>
+<button onclick="toggleDark()">🌙</button>
+<input type="file" id="upload">
+</div>
+</nav>
+</header>
+
+<div class="stats">
+<div>Total Images: <span id="total">0</span></div>
+<div>Favorites: <span id="favCount">0</span></div>
+</div>
+
+<div class="gallery" id="gallery"></div>
+
+<div class="lightbox" id="lightbox">
+<img id="lightImg">
+<div>
+<button onclick="prevImg()">⬅</button>
+<button onclick="nextImg()">➡</button>
+<button onclick="downloadImg()">Download</button>
+<button onclick="closeBox()">Close</button>
+</div>
+</div>
+
+<button id="topBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">⬆</button>
+
+<script>
+const images=[
+{cat:'Nature(Sunrise)',src:'https://images.unsplash.com/photo-1506744038136-46273834b3fb'},
+{cat:'Nature(Jungle)',src:'https://images.unsplash.com/photo-1441974231531-c6227db76b6e'},
+{cat:'Nature(Road)',src:'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee'},
+{cat:'Nature(Nature+Lake)',src:'https://images.unsplash.com/photo-1470770841072-f978cf4d019e'},
+{cat:'Nature(flower)',src:'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07'},
+{cat:'Nature(kyking)',src:'https://images.unsplash.com/photo-1501785888041-af3ef285b470'},
+{cat:'travel(sea)',src:'https://images.unsplash.com/photo-1507525428034-b723cf961d3e'},
+{cat:'travel(camera)',src:'https://images.unsplash.com/photo-1488646953014-85cb44e25828'},
+{cat:'travel(boat)',src:'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1'},
+{cat:'travel(road)',src:'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800'},
+{cat:'travel(lake)',src:'https://images.unsplash.com/photo-1503220317375-aaad61436b1b'},
+{cat:'travel(street walk) ',src:'https://images.unsplash.com/photo-1527631746610-bca00a040d60'},
+{cat:'food(meat)',src:'https://images.unsplash.com/photo-1504674900247-0877df9cc836'},
+{cat:'food(vegetables)',src:'https://images.unsplash.com/photo-1512621776951-a57141f2eefd'},
+{cat:'food(bowl)',src:'https://images.unsplash.com/photo-1546069901-ba9599a7e63c'},
+{cat:'food(meat)',src:'https://images.unsplash.com/photo-1555939594-58d7cb561ad1'},
+{cat:'food(pizza)',src:'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38'},
+{cat:'food(burger)',src:'https://images.unsplash.com/photo-1550547660-d9450f859349'}
+];
+
+let current=0;
+let currentList=[...images];
+let favs=JSON.parse(localStorage.getItem('favs')||'[]');
+
+function render(list=currentList){
+const g=document.getElementById('gallery');
+g.innerHTML='';
+list.forEach((img,i)=>{
+g.innerHTML+=`<div class="card">
+<img src="${img.src}?w=800" onclick="openBox(${i})">
+<div class="info">
+<span>${img.cat}</span>
+<span class="favorite" onclick="toggleFav('${img.src}')">${favs.includes(img.src)?'❤️':'🤍'}</span>
+</div>
+</div>`;
+});
+document.getElementById('total').textContent=list.length;
+document.getElementById('favCount').textContent=favs.length;
+}
+
+function filterCat(cat){
+currentList=cat==='all'?images:images.filter(x=>x.cat===cat);
+render();
+}
+
+document.getElementById('search').oninput=e=>{
+const t=e.target.value.toLowerCase();
+render(currentList.filter(x=>x.cat.includes(t)));
+}
+
+function toggleDark(){
+document.body.classList.toggle('dark');
+localStorage.setItem('dark',document.body.classList.contains('dark'));
+}
+
+if(localStorage.getItem('dark')==='true')document.body.classList.add('dark');
+
+function toggleFav(src){
+if(favs.includes(src))favs=favs.filter(x=>x!==src);
+else favs.push(src);
+localStorage.setItem('favs',JSON.stringify(favs));
+render();
+}
+
+function openBox(i){
+current=i;
+document.getElementById('lightbox').style.display='flex';
+document.getElementById('lightImg').src=currentList[current].src;
+}
+function closeBox(){document.getElementById('lightbox').style.display='none';}
+function nextImg(){current=(current+1)%currentList.length;document.getElementById('lightImg').src=currentList[current].src;}
+function prevImg(){current=(current-1+currentList.length)%currentList.length;document.getElementById('lightImg').src=currentList[current].src;}
+function downloadImg(){
+let a=document.createElement('a');
+a.href=document.getElementById('lightImg').src;
+a.download='image';
+a.click();
+}
+
+document.getElementById('upload').addEventListener('change',e=>{
+const file=e.target.files[0];
+if(!file)return;
+const reader=new FileReader();
+reader.onload=x=>{
+images.unshift({cat:'uploaded',src:x.target.result});
+currentList=[...images];
+render();
+};
+reader.readAsDataURL(file);
+});
+
+window.onscroll=()=>{
+document.getElementById('topBtn').style.display=window.scrollY>300?'block':'none';
+}
+
+setInterval(()=>{
+if(currentList.length){
+current=(current+1)%currentList.length;
+}
+},3000);
+
+render();
+</script>
+</body>
+</html>
