@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bollywood Music Player</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+margin:0;
+font-family:Segoe UI;
+background:linear-gradient(135deg,#0f0f0f,#1a1a2e);
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+.player{
+width:360px;
+background:#111;
+border-radius:20px;
+padding:20px;
+box-shadow:0 0 25px rgba(255,0,150,0.3);
+}
+
+h2{text-align:center;margin-bottom:10px;color:#ff4da6}
+
+.search{
+width:100%;
+padding:8px;
+border:none;
+border-radius:8px;
+margin-bottom:10px;
+}
+
+.cover{
+width:180px;
+height:180px;
+border-radius:50%;
+margin:10px auto;
+display:block;
+animation:spin 10s linear infinite;
+animation-play-state:paused;
+}
+
+@keyframes spin{
+100%{transform:rotate(360deg);}
+}
+
+.song-title{
+text-align:center;
+margin:10px 0;
+font-size:18px;
+}
+
+.controls{
+display:flex;
+justify-content:center;
+gap:10px;
+margin:10px 0;
+}
+
+button{
+background:#ff4da6;
+border:none;
+color:white;
+padding:10px;
+border-radius:10px;
+cursor:pointer;
+}
+
+button:hover{opacity:0.8}
+
+.progress-container{
+width:100%;
+background:#333;
+border-radius:10px;
+cursor:pointer;
+}
+
+#progress{
+height:6px;
+background:#ff4da6;
+width:0%;
+border-radius:10px;
+}
+
+.extra{
+display:flex;
+justify-content:space-between;
+margin-top:10px;
+font-size:12px;
+}
+
+.playlist{
+margin-top:10px;
+max-height:120px;
+overflow-y:auto;
+}
+
+.song{
+padding:6px;
+border-bottom:1px solid #222;
+cursor:pointer;
+}
+
+.song:hover{
+background:#222;
+}
+
+.active{
+color:#ff4da6;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="player">
+
+<h2>🎧 Bollywood Player</h2>
+
+<input type="text" class="search" placeholder="Search songs..." id="search">
+
+<img src="https://picsum.photos/200" class="cover" id="cover">
+
+<div class="song-title" id="title">Select a song</div>
+
+<audio id="audio"></audio>
+
+<div class="progress-container" onclick="seek(event)">
+<div id="progress"></div>
+</div>
+
+<div class="controls">
+<button onclick="prev()">⏮</button>
+<button onclick="togglePlay()">▶/⏸</button>
+<button onclick="next()">⏭</button>
+<button onclick="shuffleSong()">🔀</button>
+<button onclick="toggleRepeat()">🔁</button>
+</div>
+
+<div class="extra">
+<span id="current">0:00</span>
+<span id="duration">0:00</span>
+</div>
+
+<div class="playlist" id="playlist"></div>
+
+</div>
+
+<script>
+let songs = [
+{
+name:"Be Intehaan",
+file:"C:/CodeAlpha_Task/Be Intehaan  Atif & Sunidhi  Saif Ali Khan & Deepika Padukone  Race 2.mp3",
+img:"C:/CodeAlpha_Task/be intaah.jpg"
+},
+{
+name:"Gehra Hua",
+file:"C:/CodeAlpha_Task/Gehra Hua - Lyrical (Full Version)  Dhurandhar, Ranveer Singh, Sara A,Shashwat Sachdev,Arijit Singh.mp3",
+img:"C:/CodeAlpha_Task/gehara hua.jpg"
+},
+{
+name:"Darkhaast",
+file:"C:/CodeAlpha_Task/DARKHAAST Full Video Song   SHIVAAY  Arijit Singh & Sunidhi Chauhan  Ajay Devgn  T-Series.mp3",
+img:"C:/CodeAlpha_Task/darkhaast.jpg"
+},
+{
+name:"Paniyon Sa",
+file:"C:/CodeAlpha_Task/PANIYON SA Full Song  Satyameva Jayate   John Abraham  Aisha Sharma  Tulsi Kumar  Atif Aslam.mp3",
+img:"C:/CodeAlpha_Task/paniyon sa.jpg"
+}
+];
+
+let index = 0;
+let audio = document.getElementById("audio");
+let title = document.getElementById("title");
+let cover = document.getElementById("cover");
+let progress = document.getElementById("progress");
+
+let isPlaying = false;
+let repeat = false;
+
+function loadSong(i){
+let s = songs[i];
+title.innerText = s.name;
+audio.src = s.file;
+cover.src = s.img;
+highlight();
+}
+
+function playSong(){
+audio.play();
+isPlaying = true;
+cover.style.animationPlayState="running";
+}
+
+function pauseSong(){
+audio.pause();
+isPlaying = false;
+cover.style.animationPlayState="paused";
+}
+
+function togglePlay(){
+isPlaying ? pauseSong() : playSong();
+}
+
+function next(){
+index = (index+1)%songs.length;
+loadSong(index);
+playSong();
+}
+
+function prev(){
+index = (index-1+songs.length)%songs.length;
+loadSong(index);
+playSong();
+}
+
+function shuffleSong(){
+index = Math.floor(Math.random()*songs.length);
+loadSong(index);
+playSong();
+}
+
+function toggleRepeat(){
+repeat = !repeat;
+alert("Repeat: " + repeat);
+}
+
+audio.addEventListener("timeupdate", ()=>{
+let percent = (audio.currentTime/audio.duration)*100;
+progress.style.width = percent + "%";
+
+document.getElementById("current").innerText =
+format(audio.currentTime);
+
+document.getElementById("duration").innerText =
+format(audio.duration);
+});
+
+audio.addEventListener("ended", ()=>{
+repeat ? playSong() : next();
+});
+
+function seek(e){
+let width = e.currentTarget.clientWidth;
+let click = e.offsetX;
+audio.currentTime = (click/width)*audio.duration;
+}
+
+function format(t){
+if(isNaN(t)) return "0:00";
+let m = Math.floor(t/60);
+let s = Math.floor(t%60);
+return m+":"+ (s<10?"0":"")+s;
+}
+
+// Playlist
+let playlist = document.getElementById("playlist");
+
+function render(){
+playlist.innerHTML="";
+songs.forEach((s,i)=>{
+let div = document.createElement("div");
+div.classList.add("song");
+div.innerText = s.name;
+div.onclick=()=>{index=i;loadSong(i);playSong();}
+playlist.appendChild(div);
+});
+}
+
+function highlight(){
+document.querySelectorAll(".song").forEach((el,i)=>{
+el.classList.toggle("active",i===index);
+});
+}
+
+// Search
+document.getElementById("search").addEventListener("input",(e)=>{
+let val = e.target.value.toLowerCase();
+document.querySelectorAll(".song").forEach((el)=>{
+el.style.display = el.innerText.toLowerCase().includes(val)
+?"block":"none";
+});
+});
+
+render();
+loadSong(index);
+</script>
+
+</body>
+</html>
